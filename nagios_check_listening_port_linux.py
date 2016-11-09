@@ -31,7 +31,7 @@ def perform_check():
 	# NOTE: Execute "which netstat"
 	# to find the full path to your netstat utility.
 	# Replace the path below with the installation path for netstat on your system.
-	command = "sudo /bin/netstat -tanp"
+	command = "sudo /bin/netstat -anp"
 	command_args = shlex.split(command)
 	process = Popen(command_args, stdout=PIPE, stderr=STDOUT)
 	output = process.communicate()[0]
@@ -58,11 +58,14 @@ def process_results(check_execution, process_name, port_number):
 		if header_regex.match(line):
 			continue
 		netstat_columns = line.split()
-		if len(netstat_columns) < 7:
+		if len(netstat_columns) < 6:
 			print "UNKNOWN ERROR - netstat column format not recognized.  " \
 			"This script only works with the Linux version of netstat."
 			sys.exit(3)
-		if process_name in netstat_columns[6]:
+                if process_name in netstat_columns[5]:
+                        local_address, listening_port = netstat_columns[3].rsplit(':', 1)
+                        processes_found.append(local_address)
+                elif len(netstat_columns) >= 7 and process_name in netstat_columns[6]:
 			if state_regex.match(netstat_columns[5]):
 				local_address, listening_port = netstat_columns[3].rsplit(':', 1)
 				if int(listening_port) == port_number:
